@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { mergeCraftServer, writeConfig } from '../src/config.js';
+import { checkCodex } from '../src/codex.js';
 import { saveSession, loadSession } from '../src/session.js';
 
 test('merges server while preserving unrelated config', () => {
@@ -33,4 +34,14 @@ test('session metadata round trips without credentials', () => {
   saveSession(dir, { thread_id: 'abc', project_folder: dir });
   assert.deepEqual(loadSession(dir).thread_id, 'abc');
   assert.equal(loadSession(dir).token, undefined);
+});
+
+test('codex login parser prioritizes signed-out state', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'craft-codex-bin-'));
+  const fake = path.join(dir, 'codex');
+  fs.writeFileSync(fake, '#!/bin/sh\nif [ "$1" = "--version" ]; then echo codex-cli 0.1; else echo "Not logged in"; fi\n');
+  fs.chmodSync(fake, 0o755);
+  const result = await checkCodex(fake, process.env);
+  assert.equal(result.executable, true);
+  assert.equal(result.signedIn, false);
 });

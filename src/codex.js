@@ -40,7 +40,10 @@ export async function checkCodex(codex = 'codex', env = process.env) {
   const version = await run(codex, ['--version'], { env });
   const login = await run(codex, ['login', 'status'], { env });
   const text = `${login.stdout}\n${login.stderr}`.toLowerCase();
-  const signedIn = /logged in|authenticated|signed in/.test(text) ? true : /not logged|unauth|sign in required/.test(text) ? false : null;
+  // Negative account states must win over broad "logged in" matches.
+  const signedIn = /not logged in|not authenticated|unauthenticated|sign in required|not signed in/.test(text)
+    ? false
+    : /logged in|authenticated|signed in/.test(text) ? true : null;
   return { executable: version.code === 0, version: version.stdout.trim(), signedIn, loginError: login.code !== 0 ? login.stderr.trim() : undefined };
 }
 
