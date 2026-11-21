@@ -1,0 +1,9 @@
+{
+  "name": "craft-codex-bridge",
+  "version": "0.1.0",
+  "description": "Safe Codex CLI and MCP bridge for Craft Anything",
+  "type": "module",
+  "bin": { "craft-codex": "src/cli.js" },
+  "scripts": { "test": "node --test", "start": "node src/cli.js" },
+  "engines": { "node": ">=20" }
+}
