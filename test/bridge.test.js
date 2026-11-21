@@ -45,3 +45,13 @@ test('codex login parser prioritizes signed-out state', async () => {
   assert.equal(result.executable, true);
   assert.equal(result.signedIn, false);
 });
+import { initProject, loadProject } from '../src/project.js';
+
+test('project lifecycle creates manifest and evidence folders', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'craft-codex-app-'));
+  const state = initProject(dir, { target: 'https://example.com', request: 'Recreate it' });
+  assert.equal(state.status, 'ready-to-study');
+  assert.equal(loadProject(dir).target, 'https://example.com');
+  assert.equal(fs.existsSync(path.join(dir, 'evidence')), true);
+  assert.equal(fs.existsSync(path.join(dir, 'app')), true);
+});
