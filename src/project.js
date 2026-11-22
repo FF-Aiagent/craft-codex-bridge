@@ -12,4 +12,4 @@ export function initProject(project, { target, request }) {
   return manifest;
 }
 export function updateProject(project, patch) { const current = loadProject(project); if (!current) throw new Error('not a craft-codex project'); const next = { ...current, ...patch, updated_at: new Date().toISOString() }; fs.writeFileSync(manifestPath(project), JSON.stringify(next, null, 2) + '\n'); return next; }
-export function writeEvidence(project, name, value) { const file = path.join(project, 'evidence', name); fs.writeFileSync(file, typeof value === 'string' ? value : JSON.stringify(value, null, 2) + '\n'); return file; }
+export function writeEvidence(project, name, value) { const dir = path.join(project, 'evidence'); fs.mkdirSync(dir, { recursive: true }); const file = path.join(dir, name); fs.writeFileSync(file, typeof value === 'string' ? value : JSON.stringify(value, null, 2) + '\n'); return file; }

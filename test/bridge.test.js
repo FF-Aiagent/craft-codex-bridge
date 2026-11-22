@@ -45,7 +45,8 @@ test('codex login parser prioritizes signed-out state', async () => {
   assert.equal(result.executable, true);
   assert.equal(result.signedIn, false);
 });
-import { initProject, loadProject } from '../src/project.js';
+import { initProject, loadProject, updateProject, writeEvidence } from '../src/project.js';
+import { studyUrl } from '../src/study.js';
 
 test('project lifecycle creates manifest and evidence folders', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'craft-codex-app-'));
@@ -54,4 +55,18 @@ test('project lifecycle creates manifest and evidence folders', () => {
   assert.equal(loadProject(dir).target, 'https://example.com');
   assert.equal(fs.existsSync(path.join(dir, 'evidence')), true);
   assert.equal(fs.existsSync(path.join(dir, 'app')), true);
+});
+
+test('project errors are persisted and evidence creates its directory', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'craft-codex-error-'));
+  initProject(dir, { target: 'https://invalid.local', request: '' });
+  updateProject(dir, { status: 'study-failed', last_error: 'ENOTFOUND' });
+  writeEvidence(dir, 'nested.json', { ok: true });
+  assert.equal(loadProject(dir).status, 'study-failed');
+  assert.equal(fs.existsSync(path.join(dir, 'evidence', 'nested.json')), true);
+});
+
+test('study reports network failures with a stable prefix', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'craft-codex-study-'));
+  await assert.rejects(() => studyUrl(dir, 'http://nonexistent.invalid/'), /study failed:/);
 });

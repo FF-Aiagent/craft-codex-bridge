@@ -1,7 +1,12 @@
 import fs from 'node:fs';
 import { writeEvidence } from './project.js';
 export async function studyUrl(project, url) {
-  const response = await fetch(url, { redirect: 'follow', headers: { 'user-agent': 'craft-codex-study/0.1' } });
+  let response;
+  try {
+    response = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(20_000), headers: { 'user-agent': 'craft-codex-study/0.1' } });
+  } catch (error) {
+    throw new Error(`study failed: ${error.cause?.code || error.message}`);
+  }
   if (!response.ok) throw new Error(`study failed: HTTP ${response.status}`);
   const html = await response.text();
   const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/\s+/g, ' ').trim() || '';

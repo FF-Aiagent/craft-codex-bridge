@@ -14,5 +14,7 @@ export function startProxy({ craftCli, allowRun = false } = {}) {
     child.stdin.write(line + '\n');
   });
   child.stdout.on('data', d => process.stdout.write(d));
+  child.on('error', error => process.stderr.write(`craft-codex MCP backend failed: ${error.message}\n`));
+  child.on('close', code => { if (code !== 0) process.stderr.write(`craft-codex MCP backend exited with code ${code}\n`); });
   return child;
 }

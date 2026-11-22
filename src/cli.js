@@ -18,7 +18,8 @@ if (command === 'init') {
 } else if (command === 'study') {
   const project = path.resolve(value('--project') || process.cwd()); const target = value('--url') || loadProject(project)?.target;
   if (!target) throw new Error('study requires --url or a project target');
-  const evidence = await studyUrl(project, target); updateProject(project, { target, status: 'studied' }); out(evidence);
+  try { const evidence = await studyUrl(project, target); updateProject(project, { target, status: 'studied', last_error: null }); out(evidence); }
+  catch (error) { updateProject(project, { target, status: 'study-failed', last_error: error.message }); throw error; }
 } else if (command === 'status') {
   const project = path.resolve(value('--project') || process.cwd()); const state = loadProject(project);
   if (!state) { out({ error: 'not a craft-codex project' }); process.exitCode = 1; } else out(state);
@@ -27,7 +28,9 @@ if (command === 'init') {
   const prompt = value('--prompt') || state.request || `Recreate the studied target ${state.target || ''}. Read evidence/page.json and build the app in app/.`; updateProject(project, { request: prompt, status: 'building' });
   const previous = loadSession(project); const args = previous?.thread_id ? ['exec', '--sandbox', 'workspace-write', 'resume', previous.thread_id] : ['exec', '--sandbox', 'workspace-write'];
   const result = await execCodex(value('--codex') || 'codex', args, prompt, { cwd: project }); process.stdout.write(result.stdout); if (result.stderr) process.stderr.write(result.stderr);
-  if (result.code === 0) updateProject(project, { status: 'built' }); process.exitCode = result.code;
+  if (result.code === 0) updateProject(project, { status: 'built', last_error: null });
+  else updateProject(project, { status: 'build-failed', last_error: result.stderr || `codex exited with code ${result.code}` });
+  process.exitCode = result.code;
 } else if (command === 'doctor') {
   const craft = await discoverCraftCli(); const codex = await checkCodex(value('--codex') || 'codex');
   out({ craft_anything: craft || { available: false }, codex }); process.exitCode = craft && codex.executable ? 0 : 1;
